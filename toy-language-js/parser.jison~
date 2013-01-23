@@ -1,0 +1,87 @@
+/* Lexical grammar */
+%lex
+
+/* Tokens */
+%%
+\s+                             ;
+"if"                            return 'T_IF';
+"else"                          return 'T_ELSE';
+"local"                         return 'T_VAR';
+
+[a-zA-Z_]+([0-9a-zA-Z_])*       return 'T_ID';
+[0-9]+                          return 'T_INTEGER';
+[0-9]+\.[0-9]*                  return 'T_FLOAT';
+\".*\"                          return 'T_STRING';
+\'.*\'                          return 'T_STRING';
+
+"="                             return 'T_EQUAL';
+"*"                             return 'T_MUL';
+"/"                             return 'T_DIV';
+"-"                             return 'T_MINUS';
+"+"                             return 'T_PLUS';
+
+"{"                             return 'T_LBRACE';
+"}"                             return 'T_RBRACE';
+"("                             return 'T_LPAREN';
+")"                             return 'T_RPAREN';
+","                             return 'T_COMMA';
+";"                             return 'T_SEMICOLON';
+"."                             return 'T_DOT';
+
+"true"                          return 'T_TRUE';
+"false"                         return 'T_FALSE';
+"null"                          return 'T_NULL';
+
+.                               return 'T_ERROR';
+
+/lex
+
+%start program
+
+/* Language grammar */
+%%
+
+program
+    : statementList { return $1; }
+    ;
+
+statementList
+    : statementList statement {  $$ = $1.concat($2); }
+    | /* empty */ { $$ = []; }
+    ;
+
+statement
+    : variableStatement { $$ = $1; }
+//    | ifStatement
+    ;
+
+variableStatement
+    : T_VAR T_ID { $$ = new yy.NodeVariableDeclaration($2); }
+    | T_VAR T_ID T_EQUAL expr { $$ = new yy.NodeVariableDeclaration($2, $4); }
+    ;
+
+expr
+    : primaryExpr { $$ = $1; }
+    | primaryExpr T_EQUAL expr { $$ = new yy.NodeAssignment($1, $3); }
+    ;
+
+primaryExpr
+    : literal { $$ = $1; }
+    | T_ID { $$ = new yy.NodeIdentifier($1); }
+    ;
+
+literal
+    : T_NULL    { $$ = new yy.NodeValue($1); }
+    | T_TRUE    { $$ = new yy.NodeValue($1); }
+    | T_FALSE   { $$ = new yy.NodeValue($1); }
+    | T_INTEGER { $$ = new yy.NodeValue($1); }
+    | T_FLOAT   { $$ = new yy.NodeValue($1); }
+    | T_STRING  { $$ = $1; }
+    ;
+
+/*
+ifStatement
+    :
+    T_IF T_LPAREN expr T_RPAREN statement T_ELSE statement
+    ;
+*/

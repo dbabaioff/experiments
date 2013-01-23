@@ -1,0 +1,111 @@
+var parser = require("./parser").parser;
+
+var Toy = {};
+
+// AST
+Toy.Tree = {
+    show: function(tree) {
+        console.log(JSON.stringify(tree, null, 4))
+    }
+};
+
+// Parser
+Toy.Parser = parser;
+Toy.parse = function(string) {
+    return Toy.Parser.parse(string);
+};
+
+// Bytecode
+var Instruction = function(name, arg) {
+    this.name = name;
+    this.arg = arg || null;
+};
+
+Toy.OpCode = {
+    generate: function(tree) {
+        var intructions = [];
+        
+        for (var i = 0, l = tree.length; i < l; i++) {
+            switch (tree[i].type) {
+                case 'VAR_STMT':
+                    var id   = this.generate([tree[i].id]); // TODO REMOVE ARRAY
+                    var expr = this.generate([tree[i].expr]);  // TODO REMOVE ARRAY
+                    
+                    intructions.push(expr;
+                    intructions.push(id);
+                    intructions.push(new Instruction('OP_ASSIGN'));
+                break;
+                case 'INTEGER':
+                    return new Instruction('OP_PUSHCONST', tree[i].value);
+                break;
+                case 'IDENTIFIER':
+                    return new Instruction('OP_PUSHREF', tree[i].name);
+                break;
+            }
+        }
+        
+        return intructions;
+    },
+
+    show: function(intructions) {
+        for (var i = 0, l = intructions.length; i < l; i++) {
+            console.log(intructions[i]);
+        }
+    }
+};
+
+// VM
+Toy.VM = function() {
+    // The bytecode
+    this.instructions = [];
+    
+    // Stack 
+    this.stack = [];
+
+    // Program counter
+    this.pc = 0
+};
+Toy.VM.prototype = {
+    reset: function() {
+        this.stack = [];
+    },
+    
+    run: function(instructions) {
+        this.reset();
+        
+        this.instructions = instructions;
+        
+        while (this.pc < this.instructions.length) {
+            var instruction = this.instructions[this.pc++];
+            
+            switch (instruction.name) {
+                case 'OP_ADD':
+                    var rhs = this.stack.pop();
+                    var lhs = this.stack.pop();
+                    this.stack.push(lhs + rhs);
+                break;
+                
+                case 'OP_PUSHCONST':
+                    this.stack.push(instruction.arg);
+                break;
+                
+                case 'OP_ASSIGN':
+                    var lhs = this.stack.pop();
+                    var rhs = this.stack.pop();
+
+                    // TODO FINISH
+                break;
+                
+                case 'OP_SYSCALL':
+                    
+                break;
+            }
+        }
+    }
+};
+
+var tree = Toy.parse('local x = 10 local y = x');
+Toy.Tree.show(tree);
+
+var opCodes = Toy.OpCode.generate(tree);
+Toy.OpCode.show(opCodes);
